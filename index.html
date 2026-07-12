@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulado — Semana 4 | DatavenIA</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #1a1a2e; --paper: #f7f5f0; --rule: #d4cfc4;
+    --accent: #1a4f8a; --green: #1a6b3c; --red: #c0392b;
+    --yellow: #f5c842; --mid: #6b6b6b; --white: #ffffff;
+  }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body { font-family: 'IBM Plex Sans', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
+
+  header { background: var(--ink); color: var(--paper); padding: 2.5rem 2rem 2rem; border-bottom: 4px solid var(--yellow); }
+  .header-inner { max-width: 760px; margin: 0 auto; }
+  .eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--yellow); margin-bottom: .6rem; }
+  header h1 { font-family: 'IBM Plex Serif', serif; font-size: clamp(1.7rem, 4vw, 2.4rem); font-weight: 600; line-height: 1.2; margin-bottom: .7rem; }
+  .header-meta { font-family: 'IBM Plex Mono', monospace; font-size: .75rem; color: var(--rule); display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; }
+
+  #progress-wrap { position: sticky; top: 0; z-index: 100; background: var(--ink); padding: .6rem 2rem; display: flex; align-items: center; gap: 1rem; }
+  #progress-label { font-family: 'IBM Plex Mono', monospace; font-size: .72rem; color: var(--paper); white-space: nowrap; min-width: 6rem; }
+  #progress-bar-bg { flex: 1; height: 4px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
+  #progress-bar-fill { height: 100%; background: var(--yellow); width: 0%; transition: width .4s ease; border-radius: 2px; }
+
+  main { max-width: 760px; margin: 0 auto; padding: 2rem 2rem 4rem; }
+
+  .card { background: var(--white); border: 1px solid var(--rule); border-radius: 8px; margin-bottom: 1.5rem; overflow: hidden; display: none; }
+  .card.active { display: block; }
+  .card-head { display: flex; align-items: center; gap: .75rem; padding: 1rem 1.25rem .75rem; border-bottom: 1px solid var(--rule); background: #fafaf8; flex-wrap: wrap; }
+  .q-number { font-family: 'IBM Plex Mono', monospace; font-size: .7rem; font-weight: 600; color: var(--accent); background: #e8f0fb; padding: .2rem .55rem; border-radius: 3px; white-space: nowrap; }
+  .materia-tag { font-family: 'IBM Plex Mono', monospace; font-size: .65rem; letter-spacing: .06em; text-transform: uppercase; color: var(--mid); padding: .15rem .5rem; border: 1px solid var(--rule); border-radius: 3px; }
+  .card-body { padding: 1.5rem 1.25rem; }
+  .affirmation { font-family: 'IBM Plex Serif', serif; font-size: 1.08rem; line-height: 1.7; color: var(--ink); margin-bottom: 1.5rem; border-left: 3px solid var(--rule); padding-left: 1rem; }
+
+  .btn-row { display: flex; gap: .75rem; flex-wrap: wrap; }
+  .btn { font-family: 'IBM Plex Sans', sans-serif; font-size: .88rem; font-weight: 600; padding: .65rem 1.4rem; border: 2px solid; border-radius: 5px; cursor: pointer; transition: background .18s, color .18s, transform .1s; flex: 1; min-width: 120px; text-align: center; }
+  .btn:active { transform: scale(.97); }
+  .btn-true  { border-color: var(--green); color: var(--green); background: transparent; }
+  .btn-true:hover,  .btn-true.selected  { background: var(--green); color: var(--white); }
+  .btn-false { border-color: var(--red);   color: var(--red);   background: transparent; }
+  .btn-false:hover, .btn-false.selected { background: var(--red);   color: var(--white); }
+  .btn:disabled { opacity: .6; cursor: default; }
+  .btn-nav { border-color: var(--accent); color: var(--accent); background: transparent; margin-top: 1rem; width: 100%; }
+  .btn-nav:hover { background: var(--accent); color: var(--white); }
+
+  .feedback { display: none; margin-top: 1.2rem; padding: 1rem 1.1rem; border-radius: 6px; font-size: .9rem; line-height: 1.6; }
+  .feedback.correct { display: block; background: #f0faf4; border: 1px solid #a3d9b5; color: var(--green); }
+  .feedback.wrong   { display: block; background: #fff5f5; border: 1px solid #f5b8b3; color: var(--red); }
+  .feedback-icon { font-size: 1.1rem; margin-right: .35rem; }
+  .feedback-verdict { font-weight: 700; margin-bottom: .4rem; }
+  .feedback-tese { font-family: 'IBM Plex Serif', serif; font-size: .9rem; color: var(--ink); margin-top: .7rem; padding-top: .7rem; border-top: 1px solid var(--rule); line-height: 1.65; }
+  .feedback-fonte { font-family: 'IBM Plex Mono', monospace; font-size: .68rem; color: var(--mid); margin-top: .5rem; }
+
+  #score-screen { display: none; text-align: center; padding: 3rem 2rem; }
+  #score-screen.active { display: block; }
+  .score-circle { width: 130px; height: 130px; border-radius: 50%; background: var(--ink); color: var(--yellow); font-family: 'IBM Plex Mono', monospace; font-size: 2.4rem; font-weight: 600; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; }
+  .score-title { font-family: 'IBM Plex Serif', serif; font-size: 1.6rem; margin-bottom: .5rem; }
+  .score-sub { font-size: .9rem; color: var(--mid); margin-bottom: 2rem; }
+  .btn-gabarito { display: inline-block; margin-top: 1rem; font-family: 'IBM Plex Sans', sans-serif; font-size: .9rem; font-weight: 600; padding: .7rem 2rem; background: var(--accent); color: var(--white); border: none; border-radius: 6px; cursor: pointer; }
+  .btn-reiniciar { display: inline-block; margin-top: .75rem; font-family: 'IBM Plex Sans', sans-serif; font-size: .88rem; padding: .6rem 1.6rem; background: transparent; color: var(--ink); border: 2px solid var(--ink); border-radius: 6px; cursor: pointer; }
+
+  #gabarito { display: none; max-width: 760px; margin: 0 auto; padding: 0 2rem 4rem; }
+  #gabarito.active { display: block; }
+  .gab-title { font-family: 'IBM Plex Serif', serif; font-size: 1.3rem; font-weight: 600; margin-bottom: 1.2rem; padding-top: 1rem; border-top: 2px solid var(--ink); }
+  .gab-item { background: var(--white); border: 1px solid var(--rule); border-radius: 7px; margin-bottom: 1rem; overflow: hidden; }
+  .gab-head { display: flex; align-items: center; gap: .6rem; padding: .75rem 1rem; background: #fafaf8; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+  .gab-num { font-family: 'IBM Plex Mono', monospace; font-size: .7rem; font-weight: 600; color: var(--accent); background: #e8f0fb; padding: .15rem .45rem; border-radius: 3px; }
+  .gab-status { font-family: 'IBM Plex Mono', monospace; font-size: .68rem; font-weight: 600; padding: .15rem .5rem; border-radius: 3px; text-transform: uppercase; }
+  .gab-status.acerto { background: #d4f1df; color: var(--green); }
+  .gab-status.erro   { background: #fde8e6; color: var(--red); }
+  .gab-status.skip   { background: #eee;    color: var(--mid); }
+  .gab-body { padding: 1rem 1rem 1.1rem; }
+  .gab-afirmacao { font-family: 'IBM Plex Serif', serif; font-size: .92rem; line-height: 1.6; color: var(--ink); border-left: 3px solid var(--rule); padding-left: .8rem; margin-bottom: .8rem; }
+  .gab-resp-label { font-family: 'IBM Plex Mono', monospace; font-size: .68rem; text-transform: uppercase; color: var(--mid); letter-spacing: .07em; margin-bottom: .3rem; }
+  .gab-resp  { font-size: .9rem; line-height: 1.6; color: var(--ink); margin-bottom: .5rem; }
+  .gab-fonte { font-family: 'IBM Plex Mono', monospace; font-size: .67rem; color: var(--mid); }
+
+  #intro { text-align: center; padding: 2.5rem 1rem; border: 1px solid var(--rule); background: var(--white); border-radius: 8px; margin-bottom: 1.5rem; }
+  #intro h2 { font-family: 'IBM Plex Serif', serif; font-size: 1.3rem; margin-bottom: .7rem; }
+  #intro p { font-size: .92rem; color: var(--mid); max-width: 480px; margin: 0 auto 1.5rem; line-height: 1.6; }
+  .btn-start { font-family: 'IBM Plex Sans', sans-serif; font-size: 1rem; font-weight: 600; padding: .8rem 2.4rem; background: var(--ink); color: var(--yellow); border: none; border-radius: 6px; cursor: pointer; }
+  .btn-start:hover { opacity: .85; }
+
+  @media (max-width: 520px) {
+    header, main { padding-left: 1rem; padding-right: 1rem; }
+    #gabarito { padding-left: 1rem; padding-right: 1rem; }
+    .btn { font-size: .82rem; padding: .6rem 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <p class="eyebrow">DatavenIA — Jurisprudências</p>
+    <h1>Simulado · Semana 4</h1>
+    <div class="header-meta">
+      <span>20 questões</span>
+      <span>STJ · STF · 2026</span>
+      <span>Verdadeiro ou Falso</span>
+    </div>
+  </div>
+</header>
+
+<div id="progress-wrap">
+  <span id="progress-label">0 / 20</span>
+  <div id="progress-bar-bg"><div id="progress-bar-fill"></div></div>
+</div>
+
+<main id="quiz-main">
+  <div id="intro">
+    <h2>Pronto para testar seus julgados?</h2>
+    <p>20 questões baseadas nos julgados da Semana 4 do DatavenIA. Marque Verdadeiro ou Falso e avance. O gabarito completo só aparece ao final.</p>
+    <button class="btn-start" onclick="startQuiz()">Iniciar simulado →</button>
+  </div>
+
+  <!-- ═══════ DIR. PENAL ═══════ -->
+
+  <!-- Q1 FALSO -->
+  <div class="card" id="card-1">
+    <div class="card-head"><span class="q-number">Q 01</span><span class="materia-tag">Dir. Penal</span></div>
+    <div class="card-body">
+      <p class="affirmation">O prazo decadencial de 6 meses para o oferecimento da queixa-crime fica suspenso durante o trâmite de inquérito policial destinado à apuração da correta tipificação jurídica da conduta, recomeçando a fluir a partir da desclassificação para crime de ação penal privada.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(1,true,false)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(1,false,false)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-1">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Falso. O STJ fixou que o prazo decadencial é peremptório e não se suspende nem se interrompe. A alteração posterior da capitulação jurídica é irrelevante — o prazo corre desde que o ofendido tomou ciência real da autoria, independentemente do nome jurídico que se dê ao crime durante a investigação.</div>
+        <div class="feedback-fonte">STJ · AgRg AREsp 3.080.643/SE · 6ª Turma · Rel. Min. Rogerio Schietti Cruz · 14/04/2026</div>
+      </div>
+      <button class="btn btn-nav" id="nav-1" style="display:none" onclick="nextCard(1)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- Q2 VERDADEIRO -->
+  <div class="card" id="card-2">
+    <div class="card-head"><span class="q-number">Q 02</span><span class="materia-tag">Dir. Penal</span></div>
+    <div class="card-body">
+      <p class="affirmation">Na fixação da pena-base do crime de roubo, o fato de o agente ter escolhido deliberadamente uma vítima que exercia atividade laboral lícita no momento do crime — como motorista de aplicativo em serviço — constitui fundamento idôneo para negativar o vetor da culpabilidade, evidenciando maior reprovabilidade pela exploração da vulnerabilidade do trabalhador.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(2,true,true)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(2,false,true)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-2">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Certo. O STJ validou o aumento da pena-base com fundamento na culpabilidade exasperada (art. 59 do CP). A valoração é autônoma e não configura bis in idem com as qualificadoras do roubo, pois incide sobre o aproveitamento consciente da vulnerabilidade intrínseca ao exercício da profissão da vítima.</div>
+        <div class="feedback-fonte">STJ · REsp 2.245.209/AL · 6ª Turma · Rel. Min. Sebastião Reis Júnior · 18/03/2026</div>
+      </div>
+      <button class="btn btn-nav" id="nav-2" style="display:none" onclick="nextCard(2)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- Q3 FALSO -->
+  <div class="card" id="card-3">
+    <div class="card-head"><span class="q-number">Q 03</span><span class="materia-tag">Dir. Penal</span></div>
+    <div class="card-body">
+      <p class="affirmation">O crime de usurpação de matéria-prima da União (art. 2º da Lei n. 8.176/91) consuma-se com a simples extração de recursos minerais sem autorização legal, sendo irrelevante se o agente lhes deu destinação comercial ou simplesmente os descartou no próprio local.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(3,true,false)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(3,false,false)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-3">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Falso. O STJ fixou que o proveito ou exploração econômica do material extraído é elemento normativo essencial da conduta de "explorar". A simples movimentação ou descarte da matéria-prima, ainda que sem autorização, não configura usurpação — podendo caracterizar apenas crime ambiental (art. 55 da Lei 9.605/98).</div>
+        <div class="feedback-fonte">STJ · REsp 2.118.641/RS · 5ª Turma · Rel. Min. Joel Ilan Paciornik · 16/12/2025</div>
+      </div>
+      <button class="btn btn-nav" id="nav-3" style="display:none" onclick="nextCard(3)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- Q4 VERDADEIRO -->
+  <div class="card" id="card-4">
+    <div class="card-head"><span class="q-number">Q 04</span><span class="materia-tag">Dir. Penal</span></div>
+    <div class="card-body">
+      <p class="affirmation">As penas de perda de cargo e de inabilitação para o exercício de função pública previstas no Decreto-Lei n. 201/1967 são autônomas em relação à pena privativa de liberdade, possuindo prazo prescricional próprio e independente, de modo que a extinção da punibilidade da pena corporal não acarreta, por si só, a prescrição da sanção de inabilitação.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(4,true,true)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(4,false,true)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-4">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Certo. O STJ superou a tese da "dependência lógica" para alinhar-se ao STF (ARE 643.672). A inabilitação do DL 201/67 é sanção criminal autônoma — não mero efeito acessório da condenação —, razão pela qual cada modalidade de pena tem seu próprio prazo prescricional, calculado de forma independente.</div>
+        <div class="feedback-fonte">STJ · AgRg AREsp 2.130.713/AP · 6ª Turma · Rel. Min. Sebastião Reis Júnior · 10/03/2026</div>
+      </div>
+      <button class="btn btn-nav" id="nav-4" style="display:none" onclick="nextCard(4)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- Q5 FALSO -->
+  <div class="card" id="card-5">
+    <div class="card-head"><span class="q-number">Q 05</span><span class="materia-tag">Dir. Penal / Proc. Penal</span></div>
+    <div class="card-body">
+      <p class="affirmation">A vedação à reformatio in pejus impede que o tribunal, ao analisar recurso exclusivo da defesa, proceda à alteração da modalidade de pena restritiva de direitos para espécie considerada mais onerosa, ainda que sob o fundamento de adequação a norma penal imperativa não aplicada pelo juízo de base e que o Ministério Público tenha anuído com a sentença.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(5,true,false)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(5,false,false)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-5">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Falso. O STJ decidiu o oposto: a alteração da modalidade de pena restritiva de direitos para adequá-la à legislação específica aplicável (norma imperativa, sem margem de discricionariedade) não configura reformatio in pejus, mesmo em recurso exclusivo da defesa, desde que mantido o quantum da sanção substitutiva. Prevaleceu o voto do Min. Messod Azulay Neto (3x2), vencido o Min. Paciornik, que entendia haver agravamento na troca de prestação pecuniária por prestação de serviços à comunidade.</div>
+        <div class="feedback-fonte">STJ · AgRg no REsp 2.204.178/MG · 5ª Turma · Rel. p/ Ac. Min. Messod Azulay Neto · 14/04/2026 (Informativo 885)</div>
+      </div>
+      <button class="btn btn-nav" id="nav-5" style="display:none" onclick="nextCard(5)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- ═══════ CONSTITUCIONAL ═══════ -->
+
+  <!-- Q6 FALSO -->
+  <div class="card" id="card-6">
+    <div class="card-head"><span class="q-number">Q 06</span><span class="materia-tag">Constitucional</span></div>
+    <div class="card-body">
+      <p class="affirmation">De acordo com o STF (2026), é constitucional a norma regimental de Assembleia Legislativa estadual que permite a eleição da Mesa Diretora para o segundo biênio a qualquer tempo dentro da mesma legislatura, cabendo à maioria política do momento decidir a oportunidade de realizá-la.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(6,true,false)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(6,false,false)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-6">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Falso. O STF declarou inconstitucional a eleição antecipada da Mesa Diretora por violar o princípio da contemporaneidade. A escolha para o 2º biênio só pode ocorrer a partir de outubro do ano anterior ao novo mandato, impedindo que maiorias ocasionais "congelem" o poder e inviabilizem a alternância democrática diante de eventuais mudanças na composição política da Casa.</div>
+        <div class="feedback-fonte">STF · ADI 7.734/DF · Plenário · Rel. Min. Alexandre de Moraes · 13/04/2026 (julgamento de mérito)</div>
+      </div>
+      <button class="btn btn-nav" id="nav-6" style="display:none" onclick="nextCard(6)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- Q7 VERDADEIRO -->
+  <div class="card" id="card-7">
+    <div class="card-head"><span class="q-number">Q 07</span><span class="materia-tag">Constitucional</span></div>
+    <div class="card-body">
+      <p class="affirmation">Os procuradores municipais submetem-se ao teto remuneratório correspondente ao subsídio dos Ministros do STF, não lhes sendo aplicável o subteto de 90,25% previsto para a Magistratura Estadual, devendo os honorários advocatícios recebidos ser computados dentro desse limite global.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(7,true,true)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(7,false,true)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-7">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Certo. No julgamento conjunto de 25/03/2026 (Rcl 88.319, ADI 6.606, ADI 6.601, ADI 6.604, RE 968.646 e RE 1.059.466 — Temas 966/976 da repercussão geral), o STF garantiu aos procuradores municipais o acesso ao teto integral dos Ministros do STF, afastando o subteto dos Desembargadores. Na mesma tese conjunta, o STF fixou que o somatório do subsídio com os honorários advocatícios não pode ultrapassar esse teto — regra que consta da tese fixada no julgamento conjunto (Tema 966), não isoladamente do acórdão da Rcl 88.319.</div>
+        <div class="feedback-fonte">STF · Rcl 88.319/SP c/c RE 1.059.466 (Tema 966) e RE 968.646 (Tema 976) · Plenário · Rel. Min. Flávio Dino (Rcl) / Rel. Min. Alexandre de Moraes (Temas) · Julgamento conjunto 25/03/2026</div>
+      </div>
+      <button class="btn btn-nav" id="nav-7" style="display:none" onclick="nextCard(7)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- Q8 FALSO -->
+  <div class="card" id="card-8">
+    <div class="card-head"><span class="q-number">Q 08</span><span class="materia-tag">Constitucional</span></div>
+    <div class="card-body">
+      <p class="affirmation">As Guardas Municipais, por possuírem competência constitucionalmente restrita à proteção de bens, serviços e instalações do Município (art. 144, §8º, CF), não estão autorizadas a efetuar prisões em flagrante por crimes sem conexão direta com o patrimônio público municipal.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(8,true,false)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(8,false,false)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-8">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Falso. O STF consolidou que as Guardas Municipais integram o Sistema Único de Segurança Pública (SUSP) e podem atuar em situações de flagrante delito e na proteção da incolumidade dos cidadãos. É inconstitucional a interpretação que restringe sua atuação apenas à proteção patrimonial, pois a Lei n. 13.675/2018 ampliou suas atribuições dentro dos limites do art. 144, §8º, da CF.</div>
+        <div class="feedback-fonte">STF · ADPF 1.214/SP · Plenário · Rel. Min. Flávio Dino · 13/04/2026</div>
+      </div>
+      <button class="btn btn-nav" id="nav-8" style="display:none" onclick="nextCard(8)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- Q9 VERDADEIRO -->
+  <div class="card" id="card-9">
+    <div class="card-head"><span class="q-number">Q 09</span><span class="materia-tag">Constitucional</span></div>
+    <div class="card-body">
+      <p class="affirmation">É inconstitucional lei estadual que proíbe a cobrança de taxa de religação de energia elétrica, pois a regulação de custos e tarifas do serviço de energia elétrica é de competência privativa da União e da ANEEL, não podendo o Estado interferir no equilíbrio econômico-financeiro dos contratos de concessão federal.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(9,true,true)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(9,false,true)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-9">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Certo. O STF declarou inconstitucional lei paraense que vedava a cobrança de taxa de religação de energia. A União é a titular do serviço e a ANEEL a reguladora exclusiva do regime tarifário. A competência concorrente dos estados em matéria de defesa do consumidor não alcança o núcleo dos contratos de serviços públicos federais.</div>
+        <div class="feedback-fonte">STF · ADI 7.793/PA · Plenário · Rel. Min. Nunes Marques · 09/04/2026</div>
+      </div>
+      <button class="btn btn-nav" id="nav-9" style="display:none" onclick="nextCard(9)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- Q10 FALSO -->
+  <div class="card" id="card-10">
+    <div class="card-head"><span class="q-number">Q 10</span><span class="materia-tag">Constitucional</span></div>
+    <div class="card-body">
+      <p class="affirmation">Lei estadual que veda a cobrança de taxa de religação de energia elétrica é constitucional quando fundamentada na proteção ao consumidor hipervulnerável, pois a competência concorrente dos Estados em matéria de defesa do consumidor autoriza impor restrições às concessionárias federais em prol dos usuários mais vulneráveis.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(10,true,false)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(10,false,false)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-10">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Falso. O STF rechaçou esse argumento. A competência concorrente em defesa do consumidor não alcança o núcleo dos contratos de concessão federal — essa gratuidade estadual, ao redistribuir custos às demais tarifas, poderia gerar subsídio cruzado que exige regulação central. O Estado não pode alterar o equilíbrio econômico-financeiro de concessões da União por legislação unilateral.</div>
+        <div class="feedback-fonte">STF · ADI 7.793/PA · Plenário · Rel. Min. Nunes Marques · 09/04/2026</div>
+      </div>
+      <button class="btn btn-nav" id="nav-10" style="display:none" onclick="nextCard(10)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- ═══════ DIR. CIVIL ═══════ -->
+
+  <!-- Q11 VERDADEIRO -->
+  <div class="card" id="card-11">
+    <div class="card-head"><span class="q-number">Q 11</span><span class="materia-tag">Dir. Civil</span></div>
+    <div class="card-body">
+      <p class="affirmation">Preenchidos os requisitos para a adjudicação compulsória, a imprescritibilidade da pretensão de obter a escritura definitiva estende-se à conversão em perdas e danos decorrente da impossibilidade material de cumprimento da obrigação, de modo que a pretensão indenizatória substitutiva herda o caráter imprescritível do direito real principal.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(11,true,true)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(11,false,true)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-11">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Certo. O STJ inovou ao estender a imprescritibilidade da adjudicação compulsória à sua pretensão substitutiva (indenização). A conversão em perdas e danos é apenas um substitutivo da tutela específica — se a pretensão principal não prescreve pelo decurso do tempo, sua substituta monetária também não, impedindo que o vendedor se beneficie da própria torpeza por décadas.</div>
+        <div class="feedback-fonte">STJ · REsp 2.196.855/RJ · 3ª Turma · Rel. Min. Nancy Andrighi · 14/04/2026</div>
+      </div>
+      <button class="btn btn-nav" id="nav-11" style="display:none" onclick="nextCard(11)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- Q12 FALSO -->
+  <div class="card" id="card-12">
+    <div class="card-head"><span class="q-number">Q 12</span><span class="materia-tag">Dir. Civil</span></div>
+    <div class="card-body">
+      <p class="affirmation">As despesas de guarda e conservação de veículo alienado fiduciariamente, depositado em pátio privado em razão de liminar de busca e apreensão, devem ser limitadas a trinta dias de estadia, por aplicação analógica do art. 262 do Código de Trânsito Brasileiro, que rege as apreensões por infração de trânsito.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(12,true,false)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(12,false,false)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-12">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Falso. O STJ rejeitou a aplicação analógica do CTB a apreensões de natureza cível. As despesas de estadia constituem obrigação propter rem do credor fiduciário (proprietário do bem), que deve arcar com os custos integrais de guarda. A trava de 30 dias do art. 262 do CTB aplica-se exclusivamente a apreensões administrativas por infrações de trânsito.</div>
+        <div class="feedback-fonte">STJ · REsp 2.216.266/SP · 4ª Turma · Rel. Min. Raul Araújo · Fevereiro/2026</div>
+      </div>
+      <button class="btn btn-nav" id="nav-12" style="display:none" onclick="nextCard(12)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- Q13 VERDADEIRO -->
+  <div class="card" id="card-13">
+    <div class="card-head"><span class="q-number">Q 13</span><span class="materia-tag">Dir. Civil</span></div>
+    <div class="card-body">
+      <p class="affirmation">A responsabilidade civil por má gestão ou fraude em fundo de investimento deve ser atribuída exclusivamente aos administradores e gestores, não sendo cabível responsabilizar o próprio fundo (condomínio de cotistas) nem o distribuidor de cotas que não tenha falhado em seus deveres específicos de suitability e informação.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(13,true,true)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(13,false,true)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-13">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Certo. O STJ afastou a responsabilidade solidária automática do fundo e do distribuidor. Responsabilizar o fundo seria penalizar indiretamente os demais cotistas inocentes. O distribuidor responde apenas por falhas em seus deveres próprios (suitability e informação) — se o erro foi na gestão interna dos ativos, quem responde é o administrador/gestor que atuou com dolo ou culpa grave.</div>
+        <div class="feedback-fonte">STJ · REsp 2.230.861/GO · 3ª Turma · Rel. Min. Daniela Teixeira · 05/05/2026</div>
+      </div>
+      <button class="btn btn-nav" id="nav-13" style="display:none" onclick="nextCard(13)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- Q14 FALSO -->
+  <div class="card" id="card-14">
+    <div class="card-head"><span class="q-number">Q 14</span><span class="materia-tag">Dir. Civil</span></div>
+    <div class="card-body">
+      <p class="affirmation">Em razão da estrutura bipartida de responsabilidade civil do mercado de capitais, o fundo de investimento responde solidariamente com seu administrador pelos prejuízos causados aos cotistas por atos fraudulentos de gestão, aplicando-se a teoria da responsabilidade objetiva prevista no CDC em razão da relação de consumo estabelecida com os investidores.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(14,true,false)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(14,false,false)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-14">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Falso. O STJ rechaçou a responsabilização do fundo (condomínio), pois ele não tem personalidade jurídica própria para responder por atos ilícitos de seus gestores contra os próprios donos do fundo. Responsabilizá-lo retiraria dinheiro dos cotistas inocentes para pagar outro cotista prejudicado. A responsabilidade civil é subjetiva e recai sobre administradores e gestores que agiram com dolo ou culpa grave.</div>
+        <div class="feedback-fonte">STJ · REsp 2.230.861/GO · 3ª Turma · Rel. Min. Daniela Teixeira · 05/05/2026</div>
+      </div>
+      <button class="btn btn-nav" id="nav-14" style="display:none" onclick="nextCard(14)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- ═══════ PROCESSUAL CIVIL ═══════ -->
+
+  <!-- Q15 FALSO -->
+  <div class="card" id="card-15">
+    <div class="card-head"><span class="q-number">Q 15</span><span class="materia-tag">Processual Civil</span></div>
+    <div class="card-body">
+      <p class="affirmation">Conforme o Tema 1.408 do STJ, os sindicatos de profissionais da educação possuem legitimidade extraordinária para ajuizar ação civil pública visando a condenação da União ao pagamento de diferenças de complementação do FUNDEB, pois tais verbas têm destinação vinculada ao pagamento dos salários da categoria representada.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(15,true,false)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(15,false,false)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-15">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Falso. O STJ fixou exatamente o contrário (Tema 1.408): o sindicato não tem legítimo interesse para propor tal ação. A titularidade do direito ao repasse é exclusiva do Município — apenas o ente municipal pode pleitear as diferenças da União, nos termos do art. 18 do CPC. A intervenção sindical desequilibraria o relacionamento institucional entre entes federados.</div>
+        <div class="feedback-fonte">STJ · REsp 2.228.559/DF · 1ª Seção (Tema 1.408) · Rel. Min. Maria Thereza · 07/05/2026</div>
+      </div>
+      <button class="btn btn-nav" id="nav-15" style="display:none" onclick="nextCard(15)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- Q16 VERDADEIRO -->
+  <div class="card" id="card-16">
+    <div class="card-head"><span class="q-number">Q 16</span><span class="materia-tag">Processual Civil</span></div>
+    <div class="card-body">
+      <p class="affirmation">Compete à Justiça Federal — e não à Justiça do Trabalho — processar e julgar as ações em que se discute a validade do Relatório de Transparência Salarial e de Critérios Remuneratórios previsto na Lei n. 14.611/2023, em razão do caráter predominantemente administrativo e regulatório da matéria, que envolve intervenção na atividade econômica e livre concorrência.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(16,true,true)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(16,false,true)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-16">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Certo. O STJ definiu que a obrigação de divulgar dados remuneratórios abrange intervenção estatal na atividade econômica, sigilo empresarial e concorrência — dimensões que extrapolam a relação bilateral entre empregado e empregador típica da competência trabalhista (art. 114, CF). A natureza regulatória impõe a competência da Justiça Federal.</div>
+        <div class="feedback-fonte">STJ · AgInt CC 208.248/SP · 1ª Seção · Rel. Min. Paulo Sérgio Domingues · 10/12/2025 (pub. 2026)</div>
+      </div>
+      <button class="btn btn-nav" id="nav-16" style="display:none" onclick="nextCard(16)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- Q17 FALSO -->
+  <div class="card" id="card-17">
+    <div class="card-head"><span class="q-number">Q 17</span><span class="materia-tag">Processual Civil</span></div>
+    <div class="card-body">
+      <p class="affirmation">Em ações civis públicas sobre direitos do consumidor de abrangência nacional que tramitam em diferentes capitais, a Súmula 235 do STJ impede a reunião dos processos perante o juízo prevento quando uma das demandas já tiver recebido sentença, sendo vedada a consolidação após o julgamento de mérito.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(17,true,false)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(17,false,false)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-17">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Falso. O STJ decidiu que a Súmula 235 não incide em ACPs de impacto nacional sobre consumo. O risco de decisões contraditórias em escala nacional sobre o mesmo serviço público é intolerável — a competência do juízo prevento (art. 93, II, do CDC) não se dissolve pela prolação de sentença em um dos feitos conexos, devendo todos ser reunidos para garantir uniformidade.</div>
+        <div class="feedback-fonte">STJ · AgInt CC 202.644/ES · 1ª Seção · Rel. Min. Maria Thereza de Assis Moura · 11/03/2026</div>
+      </div>
+      <button class="btn btn-nav" id="nav-17" style="display:none" onclick="nextCard(17)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- Q18 VERDADEIRO -->
+  <div class="card" id="card-18">
+    <div class="card-head"><span class="q-number">Q 18</span><span class="materia-tag">Processual Civil</span></div>
+    <div class="card-body">
+      <p class="affirmation">Em ações civis públicas de impacto nacional sobre relações de consumo, a competência do juízo prevento para reunir todos os processos conexos não se extingue pelo fato de uma das demandas já ter recebido sentença de mérito, devendo prevalecer a concentração para garantir uniformidade de decisões em escala nacional.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(18,true,true)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(18,false,true)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-18">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Certo. O STJ afastou a Súmula 235 nesse contexto porque a proteção supraindividual do consumidor exige que um único juízo dê a solução definitiva ao mesmo modelo contratual. O risco de decisões inconciliáveis sobre o mesmo serviço público para consumidores de estados diferentes é o fator determinante para manter a prevenção mesmo após sentença em um dos feitos.</div>
+        <div class="feedback-fonte">STJ · AgInt CC 202.644/ES · 1ª Seção · Rel. Min. Maria Thereza de Assis Moura · 11/03/2026</div>
+      </div>
+      <button class="btn btn-nav" id="nav-18" style="display:none" onclick="nextCard(18)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- Q19 FALSO -->
+  <div class="card" id="card-19">
+    <div class="card-head"><span class="q-number">Q 19</span><span class="materia-tag">Processual Civil</span></div>
+    <div class="card-body">
+      <p class="affirmation">O reconhecimento de fraude à execução em doação de bem a descendente (ex.: neto) prescinde da demonstração de má-fé do donatário e do registro da penhora, sendo suficiente que a transferência tenha ocorrido após a citação válida do devedor, em razão do vínculo de parentesco.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(19,true,true)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(19,false,true)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-19">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Certo. A regra geral da Súmula 375/STJ (registro da penhora OU prova de má-fé do terceiro) continua valendo para adquirentes estranhos ao devedor. Mas a 4ª Turma do STJ relativizou essa exigência para transferências dentro do núcleo familiar: na doação de imóvel a descendente após a citação válida, a má-fé é presumida pelo próprio vínculo de parentesco, dispensando-se prova adicional ou registro da penhora.</div>
+        <div class="feedback-fonte">STJ · AREsp 2.847.102/GO · 4ª Turma · Rel. Min. Raul Araújo · 16/03/2026</div>
+      </div>
+      <button class="btn btn-nav" id="nav-19" style="display:none" onclick="nextCard(19)">Próxima questão →</button>
+    </div>
+  </div>
+
+  <!-- Q20 FALSO -->
+  <div class="card" id="card-20">
+    <div class="card-head"><span class="q-number">Q 20</span><span class="materia-tag">Processual Civil</span></div>
+    <div class="card-body">
+      <p class="affirmation">A sentença coletiva que condena o Estado (administração centralizada) a pagar verbas remuneratórias produz efeitos erga omnes imediatos, beneficiando todos os servidores públicos, inclusive os vinculados a autarquias e fundações públicas estaduais, independentemente de estas terem figurado no polo passivo da ação.</p>
+      <div class="btn-row">
+        <button class="btn btn-true"  onclick="answer(20,true,false)">✓ Verdadeiro</button>
+        <button class="btn btn-false" onclick="answer(20,false,false)">✗ Falso</button>
+      </div>
+      <div class="feedback" id="fb-20">
+        <div class="feedback-verdict"><span class="feedback-icon"></span><span class="verdict-text"></span></div>
+        <div class="feedback-tese">Falso. Pelo Tema 1.402/STJ, a condenação da administração centralizada (ex.: o Estado ou o DF) não aproveita aos servidores da administração indireta. Autarquias e fundações públicas têm personalidade jurídica própria e não são alcançadas pela coisa julgada de processo em que não foram partes (CPC, art. 506) — mesmo que vinculadas ao mesmo ente federativo.</div>
+        <div class="feedback-fonte">STJ · REsp 2.231.007/DF (Tema 1.402) · 1ª Seção · Rel. Min. Maria Thereza de Assis Moura · 11/03/2026</div>
+      </div>
+      <button class="btn btn-nav" id="nav-20" style="display:none" onclick="showScore()">Ver resultado →</button>
+    </div>
+  </div>
+
+</main>
+
+<!-- SCORE -->
+<div id="score-screen">
+  <div class="score-circle" id="score-display">—</div>
+  <h2 class="score-title" id="score-title">Resultado</h2>
+  <p class="score-sub" id="score-sub">Calculando…</p>
+  <button class="btn-gabarito" onclick="showGabarito()">Ver gabarito completo →</button><br>
+  <button class="btn-reiniciar" onclick="restartQuiz()">↺ Refazer simulado</button>
+</div>
+
+<!-- GABARITO -->
+<div id="gabarito"></div>
+
+<script>
+  const TOTAL = 20;
+
+  // 9V: Q2,Q4,Q7,Q9,Q11,Q13,Q16,Q18,Q20
+  // 11F: Q1,Q3,Q5,Q6,Q8,Q10,Q12,Q14,Q15,Q17,Q19
+  const GABARITO_CORRETO = [
+    null,
+    false, // Q1
+    true,  // Q2
+    false, // Q3
+    true,  // Q4
+    false, // Q5
+    false, // Q6
+    true,  // Q7
+    false, // Q8
+    true,  // Q9
+    false, // Q10
+    true,  // Q11
+    false, // Q12
+    true,  // Q13
+    false, // Q14
+    false, // Q15
+    true,  // Q16
+    false, // Q17
+    true,  // Q18
+    false, // Q19
+    true,  // Q20
+  ];
+
+  const AFIRMACOES = [
+    null,
+    "O prazo decadencial de 6 meses para o oferecimento da queixa-crime fica suspenso durante o inquérito destinado à apuração da tipificação correta, recomeçando a fluir a partir da desclassificação para crime de ação privada.",
+    "Na pena-base do roubo, o fato de o agente ter escolhido deliberadamente vítima em exercício de atividade laboral — como motorista de aplicativo em serviço — é fundamento idôneo para negativar a culpabilidade, evidenciando maior reprovabilidade.",
+    "O crime de usurpação de matéria-prima da União consuma-se com a simples extração sem autorização, sendo irrelevante se o agente lhes deu destinação comercial ou apenas os descartou no próprio local.",
+    "As penas de inabilitação para cargo público (DL 201/67) são autônomas em relação à PPL e possuem prazo prescricional próprio — a extinção da punibilidade da pena corporal não acarreta a prescrição da inabilitação.",
+    "A vedação à reformatio in pejus impede que o tribunal, em recurso exclusivo da defesa, altere a modalidade de pena restritiva para espécie mais onerosa, ainda que para adequação a norma imperativa não aplicada pelo juízo de base.",
+    "É constitucional norma regimental de Assembleia Legislativa que permite a eleição da Mesa Diretora para o 2º biênio a qualquer tempo dentro da mesma legislatura.",
+    "Os procuradores municipais submetem-se ao teto do STF (não ao subteto dos Desembargadores), incluindo os honorários advocatícios no cálculo do limite global.",
+    "As Guardas Municipais, por competência constitucionalmente restrita à proteção patrimonial municipal, não estão autorizadas a efetuar prisões em flagrante por crimes sem conexão direta com o patrimônio público.",
+    "É inconstitucional lei estadual que proíbe a cobrança de taxa de religação de energia elétrica, pois a regulação tarifária do setor é competência privativa da União e da ANEEL.",
+    "Lei estadual que veda taxa de religação de energia elétrica é constitucional quando fundamentada na proteção ao consumidor hipervulnerável, com base na competência concorrente estadual em defesa do consumidor.",
+    "A imprescritibilidade da adjudicação compulsória estende-se à conversão em perdas e danos por impossibilidade material — a pretensão indenizatória substitutiva herda o caráter imprescritível do direito real principal.",
+    "As despesas de estadia de veículo alienado fiduciariamente em pátio privado (liminar de busca e apreensão) devem ser limitadas a 30 dias, por aplicação analógica do art. 262 do CTB.",
+    "A responsabilidade por má gestão ou fraude em fundo de investimento recai exclusivamente sobre administradores e gestores — não sobre o fundo (condomínio) nem sobre o distribuidor que não falhou em seus deveres de suitability.",
+    "O fundo de investimento responde solidariamente com seu administrador pelos prejuízos causados aos cotistas por fraude de gestão, aplicando-se responsabilidade objetiva do CDC.",
+    "Pelo Tema 1.408 do STJ, sindicatos de profissionais da educação têm legitimidade extraordinária para propor ACP visando diferenças de complementação do FUNDEB pela União.",
+    "Compete à Justiça Federal — e não à Trabalhista — julgar ações que discutem a validade do Relatório de Transparência Salarial (Lei 14.611/2023), em razão do caráter regulatório da matéria.",
+    "Em ACPs de impacto nacional sobre consumo, a Súmula 235/STJ impede a reunião no juízo prevento quando uma das demandas já tiver sentença.",
+    "Em ACPs de impacto nacional sobre consumo, a competência do juízo prevento subsiste mesmo após sentença em uma das demandas, para garantir uniformidade de decisões em escala nacional.",
+    "Na doação de bem a descendente, o reconhecimento de fraude à execução prescinde de má-fé do donatário e do registro da penhora, bastando que a transferência seja posterior à citação válida do devedor, dado o vínculo de parentesco.",
+    "A sentença coletiva que condena o Estado (administração centralizada) produz efeitos erga omnes imediatos, beneficiando todos os servidores, inclusive os de autarquias e fundações públicas, ainda que estas não tenham figurado no polo passivo da ação.",
+  ];
+
+  const EXPLICACOES = [
+    null,
+    { gabarito:"FALSO",      tese:"O prazo decadencial é peremptório e não se suspende nem interrompe. A alteração da capitulação jurídica é irrelevante — o prazo corre desde a ciência real da autoria, independentemente do nome jurídico do crime durante a investigação.", fonte:"STJ · AgRg AREsp 3.080.643/SE · 6ª T. · Rel. Min. Rogerio Schietti Cruz · 14/04/2026" },
+    { gabarito:"VERDADEIRO", tese:"O STJ validou a negativação da culpabilidade com base no aproveitamento consciente da vulnerabilidade laboral da vítima. A valoração é autônoma e não configura bis in idem com as qualificadoras do roubo.", fonte:"STJ · REsp 2.245.209/AL · 6ª T. · Rel. Min. Sebastião Reis Júnior · 18/03/2026" },
+    { gabarito:"FALSO",      tese:"O proveito ou exploração econômica é elemento normativo essencial da conduta de 'explorar'. O mero descarte ou uso doméstico da matéria-prima é atípico para usurpação — podendo configurar apenas crime ambiental.", fonte:"STJ · REsp 2.118.641/RS · 5ª T. · Rel. Min. Joel Ilan Paciornik · 16/12/2025" },
+    { gabarito:"VERDADEIRO", tese:"O STJ superou a tese da 'dependência lógica' e alinhou-se ao STF: a inabilitação do DL 201/67 é sanção autônoma com prazo prescricional próprio. A extinção da PPL não contamina a inabilitação.", fonte:"STJ · AgRg AREsp 2.130.713/AP · 6ª T. · Rel. Min. Sebastião Reis Júnior · 10/03/2026" },
+    { gabarito:"FALSO", tese:"O STJ decidiu o oposto: a alteração da modalidade de pena restritiva de direitos para adequá-la à legislação específica aplicável (norma imperativa, sem margem de discricionariedade) não configura reformatio in pejus, mesmo em recurso exclusivo da defesa, desde que mantido o quantum da sanção substitutiva. Prevaleceu o voto do Min. Messod Azulay Neto (3x2), vencido o Min. Paciornik, que entendia haver agravamento na troca de prestação pecuniária por prestação de serviços à comunidade.", fonte:"STJ · AgRg no REsp 2.204.178/MG · 5ª T. · Rel. p/ Ac. Min. Messod Azulay Neto · 14/04/2026 (Informativo 885)" },
+    { gabarito:"FALSO",      tese:"O STF declarou inconstitucional a eleição antecipada: o princípio da contemporaneidade exige que a escolha para o 2º biênio só ocorra a partir de outubro do ano anterior ao novo mandato, vedando o 'congelamento' de maiorias ocasionais.", fonte:"STF · ADI 7.734/DF · Plenário · Rel. Min. Alexandre de Moraes · 13/04/2026 (julgamento de mérito)" },
+    { gabarito:"VERDADEIRO", tese:"No julgamento conjunto de 25/03/2026 (Rcl 88.319 + ADI 6.606, 6.601, 6.604 + RE 968.646 e RE 1.059.466, Temas 966/976), o STF garantiu aos procuradores municipais o teto integral dos Ministros do STF, afastando o subteto dos Desembargadores, e fixou, na tese conjunta, que os honorários somados ao subsídio não podem ultrapassar esse teto.", fonte:"STF · Rcl 88.319/SP c/c Tema 966 (RE 1.059.466) · Plenário · Rel. Min. Flávio Dino / Rel. Min. Alexandre de Moraes · 25/03/2026" },
+    { gabarito:"FALSO",      tese:"O STF consolidou que as Guardas Municipais integram o SUSP e podem atuar em situações de flagrante. É inconstitucional a interpretação que restringe sua atuação à proteção patrimonial, pois a Lei 13.675/2018 ampliou suas atribuições.", fonte:"STF · ADPF 1.214/SP · Plenário · Rel. Min. Flávio Dino · 13/04/2026" },
+    { gabarito:"VERDADEIRO", tese:"A regulação tarifária do setor elétrico é competência exclusiva da União e da ANEEL. O Estado não pode interferir no equilíbrio econômico-financeiro dos contratos de concessão federal, ainda que invoque defesa do consumidor.", fonte:"STF · ADI 7.793/PA · Plenário · Rel. Min. Nunes Marques · 09/04/2026" },
+    { gabarito:"FALSO",      tese:"A competência concorrente em defesa do consumidor não alcança o núcleo dos contratos de concessão federal. A gratuidade estadual geraria subsídio cruzado que exige regulação central — o Estado não pode alterar unilateralmente o equilíbrio das concessões da União.", fonte:"STF · ADI 7.793/PA · Plenário · Rel. Min. Nunes Marques · 09/04/2026" },
+    { gabarito:"VERDADEIRO", tese:"O STJ estendeu a imprescritibilidade da adjudicação compulsória à pretensão indenizatória substitutiva: se a ação de escritura não prescreve pelo tempo, sua substituta monetária também não, impedindo que o vendedor se beneficie da própria torpeza por décadas.", fonte:"STJ · REsp 2.196.855/RJ · 3ª T. · Rel. Min. Nancy Andrighi · 14/04/2026" },
+    { gabarito:"FALSO",      tese:"O art. 262 do CTB aplica-se apenas a apreensões administrativas por infrações de trânsito. Para apreensões civis (busca e apreensão judicial), as despesas de estadia são obrigação propter rem do credor fiduciário, sem limitação temporal.", fonte:"STJ · REsp 2.216.266/SP · 4ª T. · Rel. Min. Raul Araújo · Fevereiro/2026" },
+    { gabarito:"VERDADEIRO", tese:"Responsabilizar o fundo (condomínio) penalizaria indiretamente os cotistas inocentes. O distribuidor só responde por falhas em seus deveres próprios (suitability e informação). A fraude de gestão imputa responsabilidade apenas a administradores e gestores que agiram com dolo ou culpa grave.", fonte:"STJ · REsp 2.230.861/GO · 3ª T. · Rel. Min. Daniela Teixeira · 05/05/2026" },
+    { gabarito:"FALSO",      tese:"O fundo não tem personalidade jurídica e não pode responder por atos ilícitos de seus gestores contra os próprios cotistas. A responsabilidade é subjetiva e recai sobre administradores e gestores — o CDC não impõe responsabilidade objetiva ao condomínio de cotistas.", fonte:"STJ · REsp 2.230.861/GO · 3ª T. · Rel. Min. Daniela Teixeira · 05/05/2026" },
+    { gabarito:"FALSO",      tese:"O Tema 1.408/STJ é o oposto: o sindicato não tem legítimo interesse para propor tal ACP. Apenas o ente municipal pode pleitear diferenças de repasse do FUNDEB junto à União (art. 18 do CPC).", fonte:"STJ · REsp 2.228.559/DF · 1ª Seção (Tema 1.408) · Rel. Min. Maria Thereza · 07/05/2026" },
+    { gabarito:"VERDADEIRO", tese:"A obrigação de divulgar dados remuneratórios envolve intervenção estatal na atividade econômica, sigilo empresarial e concorrência — dimensões que extrapolam a relação bilateral trabalhista, impondo a competência da Justiça Federal.", fonte:"STJ · AgInt CC 208.248/SP · 1ª Seção · Rel. Min. Paulo Sérgio Domingues · 10/12/2025 (pub. 2026)" },
+    { gabarito:"FALSO",      tese:"O STJ afastou a Súmula 235 em ACPs de impacto nacional sobre consumo. O risco de decisões contraditórias em escala nacional prevalece — a competência do juízo prevento (art. 93, II, CDC) subsiste mesmo após sentença em um dos feitos conexos.", fonte:"STJ · AgInt CC 202.644/ES · 1ª Seção · Rel. Min. Maria Thereza · 11/03/2026" },
+    { gabarito:"VERDADEIRO", tese:"A proteção supraindividual do consumidor exige que um único juízo decida o mesmo modelo contratual. O risco de decisões inconciliáveis sobre o mesmo serviço para consumidores de estados diferentes é o fator determinante para manter a prevenção.", fonte:"STJ · AgInt CC 202.644/ES · 1ª Seção · Rel. Min. Maria Thereza · 11/03/2026" },
+    { gabarito:"VERDADEIRO", tese:"A Súmula 375/STJ (registro da penhora OU prova de má-fé) segue valendo para terceiros estranhos ao devedor. Mas em doações a descendentes, a 4ª Turma do STJ presume a má-fé pelo próprio vínculo familiar, dispensando registro da penhora ou prova adicional, bastando a transferência ser posterior à citação válida.", fonte:"STJ · AREsp 2.847.102/GO · 4ª T. · Rel. Min. Raul Araújo · 16/03/2026" },
+    { gabarito:"FALSO", tese:"Pelo Tema 1.402/STJ, a condenação da administração centralizada não aproveita aos servidores da administração indireta. Autarquias e fundações têm personalidade jurídica própria e não são alcançadas pela coisa julgada de processo do qual não foram partes (CPC, art. 506).", fonte:"STJ · REsp 2.231.007/DF (Tema 1.402) · 1ª Seção · Rel. Min. Maria Thereza de Assis Moura · 11/03/2026" },
+  ];
+
+  // ── STATE ──
+  let answered = new Array(TOTAL + 1).fill(null);
+  let score = 0;
+
+  function updateProgress() {
+    const done = answered.filter(v => v !== null).length;
+    document.getElementById('progress-label').textContent = done + ' / ' + TOTAL;
+    document.getElementById('progress-bar-fill').style.width = (done / TOTAL * 100) + '%';
+  }
+
+  function startQuiz() {
+    document.getElementById('intro').style.display = 'none';
+    nextCard(0);
+  }
+
+  function nextCard(from) {
+    if (from > 0) document.getElementById('card-' + from).classList.remove('active');
+    const next = from + 1;
+    if (next <= TOTAL) {
+      document.getElementById('card-' + next).classList.add('active');
+      document.getElementById('card-' + next).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function answer(q, userAnswer, correctAnswer) {
+    if (answered[q] !== null) return;
+    answered[q] = userAnswer;
+    const isCorrect = (userAnswer === correctAnswer);
+    if (isCorrect) score++;
+
+    const card = document.getElementById('card-' + q);
+    card.querySelectorAll('.btn-true, .btn-false').forEach(b => b.disabled = true);
+    card.querySelector(userAnswer ? '.btn-true' : '.btn-false').classList.add('selected');
+
+    const fb = document.getElementById('fb-' + q);
+    fb.classList.add(isCorrect ? 'correct' : 'wrong');
+    fb.querySelector('.feedback-icon').textContent = isCorrect ? '✓' : '✗';
+    fb.querySelector('.verdict-text').textContent = isCorrect ? 'Correto!' : 'Incorreto';
+
+    document.getElementById('nav-' + q).style.display = 'block';
+    updateProgress();
+  }
+
+  function showScore() {
+    document.getElementById('card-' + TOTAL).classList.remove('active');
+    document.getElementById('quiz-main').style.display = 'none';
+    document.getElementById('progress-wrap').style.display = 'none';
+
+    const pct = Math.round(score / TOTAL * 100);
+    document.getElementById('score-display').textContent = score + '/' + TOTAL;
+    document.getElementById('score-title').textContent =
+      pct >= 80 ? 'Excelente!' : pct >= 60 ? 'Bom desempenho!' : 'Continue praticando!';
+    document.getElementById('score-sub').textContent =
+      pct + '% de acertos · ' + score + ' certas, ' + (TOTAL - score) + ' incorretas';
+
+    document.getElementById('score-screen').classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function showGabarito() {
+    const el = document.getElementById('gabarito');
+    el.innerHTML = '<h2 class="gab-title">Gabarito completo — Semana 4</h2>';
+
+    for (let i = 1; i <= TOTAL; i++) {
+      const userAns = answered[i];
+      const correct = GABARITO_CORRETO[i];
+      let statusClass = 'skip', statusLabel = 'Não respondida';
+      if (userAns !== null) {
+        const ok = (userAns === correct);
+        statusClass = ok ? 'acerto' : 'erro';
+        statusLabel = ok ? 'Acerto' : 'Erro';
+      }
+      const g = EXPLICACOES[i];
+      el.innerHTML += `
+        <div class="gab-item">
+          <div class="gab-head">
+            <span class="gab-num">Q ${String(i).padStart(2,'0')}</span>
+            <span class="gab-status ${statusClass}">${statusLabel}</span>
+          </div>
+          <div class="gab-body">
+            <div class="gab-afirmacao">${AFIRMACOES[i]}</div>
+            <div class="gab-resp-label">Resposta correta</div>
+            <div class="gab-resp"><strong>${g.gabarito}</strong> — ${g.tese}</div>
+            <div class="gab-fonte">${g.fonte}</div>
+          </div>
+        </div>`;
+    }
+
+    el.classList.add('active');
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function restartQuiz() {
+    answered = new Array(TOTAL + 1).fill(null);
+    score = 0;
+
+    document.getElementById('score-screen').classList.remove('active');
+    document.getElementById('gabarito').classList.remove('active');
+    document.getElementById('gabarito').innerHTML = '';
+    document.getElementById('quiz-main').style.display = '';
+    document.getElementById('progress-wrap').style.display = '';
+
+    for (let i = 1; i <= TOTAL; i++) {
+      const card = document.getElementById('card-' + i);
+      card.classList.remove('active');
+      card.querySelectorAll('.btn-true,.btn-false').forEach(b => { b.disabled = false; b.classList.remove('selected'); });
+      document.getElementById('fb-' + i).className = 'feedback';
+      document.getElementById('nav-' + i).style.display = 'none';
+    }
+
+    document.getElementById('intro').style.display = '';
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
